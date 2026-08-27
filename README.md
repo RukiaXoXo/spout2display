@@ -8,6 +8,7 @@ It supports two rendering backends: **DirectX 12** (default) and **OpenGL**.
 - Renders the received texture with DirectX 12 (default) or OpenGL.
 - Handles sender resolution changes and reconnects if the sender closes.
 - Backend selectable via a settings file or a command-line argument.
+- FPS counter under F1 button
 
 ## Backend selection
 
