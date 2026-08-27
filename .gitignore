@@ -1,0 +1,12 @@
+spout2libs
+
+# Build output
+build/
+out/
+*.user
+
+# Visual Studio
+.vs/
+*.suo
+*.VC.db
+*.VC.opendb
