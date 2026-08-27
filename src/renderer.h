@@ -15,18 +15,33 @@
 #pragma once
 
 #include <windows.h>
-#include <GL/gl.h>
+#include <memory>
 
-class Renderer
+// Backend selection for rendering + Spout receiving.
+enum class RenderBackend
+{
+    OpenGL,
+    DirectX12
+};
+
+// Abstract renderer. Each concrete backend owns its own Spout receiver and
+// rendering pipeline, so the main loop only drives a generic frame cycle.
+class IRenderer
 {
 public:
-    void init(int width, int height);
-    void resize(int width, int height);
+    virtual ~IRenderer() = default;
 
-    // Draws the given texture (or clears to black if textureID == 0).
-    void render(GLuint textureID, unsigned int texW, unsigned int texH);
-
-private:
-    int m_width = 0;
-    int m_height = 0;
+    // Create the graphics context, swap chain and Spout receiver.
+    virtual bool init(HWND hwnd, int width, int height) = 0;
+    // Handle window resize.
+    virtual void resize(int width, int height) = 0;
+    // Receive the first available Spout sender and draw it.
+    virtual void renderFrame() = 0;
+    // Present the rendered frame to the window.
+    virtual void present() = 0;
+    // Release all resources.
+    virtual void shutdown() = 0;
 };
+
+// Factory: creates the renderer for the requested backend.
+std::unique_ptr<IRenderer> createRenderer(RenderBackend backend);

@@ -20,7 +20,10 @@ endif()
 
 add_executable(spout2display WIN32
     src/main.cpp
-    src/renderer.cpp
+    src/settings.cpp
+    src/renderer_factory.cpp
+    src/renderer_gl.cpp
+    src/renderer_dx12.cpp
 )
 
 # Static linking: SPOUT_DLLEXP must stay empty (no dllimport/dllexport).
@@ -32,13 +35,18 @@ target_compile_definitions(spout2display PRIVATE
 target_include_directories(spout2display PRIVATE
     "${SPOUT2_ROOT}/include"
     "${SPOUT2_ROOT}/include/SpoutGL"
+    "${SPOUT2_ROOT}/include/SpoutDX12"
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
 target_link_libraries(spout2display PRIVATE
     "${SPOUT2_ROOT}/MT/lib/Spout_static.lib"
+    "${SPOUT2_ROOT}/MT/lib/SpoutDX_static.lib"
+    "${SPOUT2_ROOT}/MT/lib/SpoutDX12_static.lib"
     opengl32
     glu32
     d3d11
+    d3d12
     dxgi
+    d3dcompiler
 )

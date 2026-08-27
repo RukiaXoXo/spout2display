@@ -1,11 +1,32 @@
 # Spout2 Display
 
-A Windows application that opens a window and displays the **Spout2 sender** using **OpenGL**.
+A Windows application that opens a window and displays the **Spout2 sender**.
+It supports two rendering backends: **DirectX 12** (default) and **OpenGL**.
 
 ## Features
 
-- Renders the received texture with OpenGL (fixed-function pipeline).
+- Renders the received texture with DirectX 12 (default) or OpenGL.
 - Handles sender resolution changes and reconnects if the sender closes.
+- Backend selectable via a settings file or a command-line argument.
+
+## Backend selection
+
+The backend defaults to **DirectX 12**. You can switch to OpenGL in two ways:
+
+1. **Settings file** — create `spout2display.ini` next to the executable:
+
+   ```ini
+   [General]
+   renderer=opengl
+   ```
+
+   (use `renderer=dx12` for DirectX 12)
+
+2. **Command line** (overrides the settings file):
+   ```
+   spout2display.exe --renderer=opengl
+   spout2display.exe --renderer=dx12
+   ```
 
 ## Requirements
 
@@ -25,15 +46,19 @@ Final file `build\Release\spout2display.exe`.
 
 ```
 spout2display/
-├── CMakeLists.txt          # Build configuration (static MT Spout library)
-├── spout2libs/                 # Spout2 SDK (download separately)
+├── CMakeLists.txt          # Build configuration (static MT Spout libraries)
+├── spout2libs/             # Spout2 SDK (download separately)
 │   ├── include             #
 │   ├── MD                  # Uses the dynamic C/C++ runtime (/MD)
 │   └── MT                  # Uses the static C/C++ runtime (/MT)
 ├── src/
-│   ├── main.cpp            # Win32 window + OpenGL context + SpoutReceiver
-│   ├── renderer.h          # OpenGL renderer interface
-│   └── renderer.cpp        # OpenGL quad renderer
+│   ├── main.cpp            # Win32 window + main loop
+│   ├── settings.h    # Backend selection (ini + command line)
+│   ├── settings.cpp     # Backend selection (ini + command line)
+│   ├── renderer.h          # IRenderer interface + factory
+│   ├── renderer_factory.cpp# Backend factory
+│   ├── renderer_gl.h/.cpp  # OpenGL renderer + SpoutReceiver
+│   └── renderer_dx12.h/.cpp# DirectX 12 renderer + spoutDX12
 ```
 
 ## Licensing
