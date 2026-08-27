@@ -41,6 +41,8 @@ public:
     virtual void renderFrame() = 0;
     // Present the rendered frame to the window.
     virtual void present() = 0;
+    // Current frames per second (updated by renderFrame).
+    virtual double getFps() const = 0;
     // Release all resources.
     virtual void shutdown() = 0;
 };

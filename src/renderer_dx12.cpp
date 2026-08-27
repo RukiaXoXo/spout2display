@@ -380,6 +380,19 @@ void DX12Renderer::renderFrame()
     if (!m_receiver)
         return;
 
+    // Update the FPS counter.
+    ++m_frameCount;
+    double now = (double)GetTickCount64() / 1000.0;
+    if (m_lastFpsTime == 0.0)
+        m_lastFpsTime = now;
+    double dt = now - m_lastFpsTime;
+    if (dt >= 1.0)
+    {
+        m_fps = (double)m_frameCount / dt;
+        m_frameCount = 0;
+        m_lastFpsTime = now;
+    }
+
     // Find the first available sender.
     std::vector<std::string> senders = m_receiver->GetSenderList();
     if (!senders.empty())
@@ -495,6 +508,11 @@ void DX12Renderer::present()
 {
     m_swapChain->Present(1, 0);
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+double DX12Renderer::getFps() const
+{
+    return m_fps;
 }
 
 void DX12Renderer::shutdown()

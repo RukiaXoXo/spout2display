@@ -95,6 +95,19 @@ void OpenGLRenderer::renderFrame()
     if (!m_receiver)
         return;
 
+    // Update the FPS counter.
+    ++m_frameCount;
+    double now = (double)GetTickCount64() / 1000.0;
+    if (m_lastFpsTime == 0.0)
+        m_lastFpsTime = now;
+    double dt = now - m_lastFpsTime;
+    if (dt >= 1.0)
+    {
+        m_fps = (double)m_frameCount / dt;
+        m_frameCount = 0;
+        m_lastFpsTime = now;
+    }
+
     // Look for the first available sender.
     int count = m_receiver->GetSenderCount();
     if (count > 0)
@@ -180,6 +193,11 @@ void OpenGLRenderer::present()
 {
     if (m_hDC)
         SwapBuffers(m_hDC);
+}
+
+double OpenGLRenderer::getFps() const
+{
+    return m_fps;
 }
 
 void OpenGLRenderer::shutdown()

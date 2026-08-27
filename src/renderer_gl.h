@@ -29,6 +29,7 @@ public:
     void setBackgroundColor(float r, float g, float b) override;
     void renderFrame() override;
     void present() override;
+    double getFps() const override;
     void shutdown() override;
 
 private:
@@ -40,6 +41,11 @@ private:
     float m_bgR = 0.0f;
     float m_bgG = 0.0f;
     float m_bgB = 0.0f;
+
+    // FPS counter.
+    double m_fps = 0.0;
+    unsigned long long m_frameCount = 0;
+    double m_lastFpsTime = 0.0;
 
     // Spout receiver (created lazily after the GL context exists).
     class SpoutReceiver *m_receiver = nullptr;

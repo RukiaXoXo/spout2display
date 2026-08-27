@@ -32,6 +32,8 @@
 // Global state
 // ---------------------------------------------------------------------------
 static std::unique_ptr<IRenderer> g_renderer;
+static bool g_showFps = false;
+static std::wstring g_baseTitle = L"Spout2 Display";
 
 // Menu command IDs for the background color.
 enum
@@ -56,6 +58,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 {
     switch (msg)
     {
+    case WM_KEYDOWN:
+        if (wParam == VK_F1)
+        {
+            g_showFps = !g_showFps;
+            if (!g_showFps)
+                SetWindowTextW(hwnd, g_baseTitle.c_str());
+        }
+        break;
     case WM_SIZE:
         if (g_renderer)
             g_renderer->resize(LOWORD(lParam), HIWORD(lParam));
@@ -132,6 +142,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 
     RenderBackend backend = resolveBackend((int)argvPtrs.size(), argvPtrs.data());
 
+    // Window title: application name + used backend.
+    g_baseTitle = L"Spout2 Display";
+    if (backend == RenderBackend::OpenGL)
+        g_baseTitle += L" - OpenGL";
+    else
+        g_baseTitle += L" - DirectX 12";
+    const std::wstring title = g_baseTitle;
+
     const wchar_t *className = L"Spout2DisplayWindow";
 
     WNDCLASSEX wc = {};
@@ -144,7 +162,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
     RegisterClassEx(&wc);
 
     HWND hwnd = CreateWindowEx(
-        0, className, L"Spout2 Display",
+        0, className, title.c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720,
         nullptr, nullptr, hInstance, nullptr);
@@ -167,6 +185,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 
     // Main loop - continuous rendering.
     MSG msg = {};
+    DWORD lastFpsTitle = 0;
     for (;;)
     {
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -182,5 +201,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
         }
         g_renderer->renderFrame();
         g_renderer->present();
+
+        // Update the title with FPS once per second when F1 is active.
+        if (g_showFps)
+        {
+            DWORD now = GetTickCount();
+            if (now - lastFpsTitle >= 500)
+            {
+                lastFpsTitle = now;
+                wchar_t buf[128];
+                swprintf(buf, 128, L"%s - %.1f FPS", g_baseTitle.c_str(),
+                         g_renderer->getFps());
+                SetWindowTextW(hwnd, buf);
+            }
+        }
     }
 }

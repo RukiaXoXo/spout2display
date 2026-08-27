@@ -36,6 +36,7 @@ public:
     void setBackgroundColor(float r, float g, float b) override;
     void renderFrame() override;
     void present() override;
+    double getFps() const override;
     void shutdown() override;
 
 private:
@@ -67,6 +68,11 @@ private:
     UINT m_srvDescriptorSize = 0;
     HANDLE m_fenceEvent = nullptr;
     UINT64 m_fenceValue = 0;
+
+    // FPS counter.
+    double m_fps = 0.0;
+    unsigned long long m_frameCount = 0;
+    double m_lastFpsTime = 0.0;
 
     // Spout DX12 receiver (created lazily after the device exists).
     class spoutDX12 *m_receiver = nullptr;
