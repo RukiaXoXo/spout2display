@@ -34,7 +34,9 @@ VSOut main(float3 pos : POSITION, float2 uv : TEXCOORD0) {
 }
 )";
 
-    // Pixel shader: sample the received texture.
+    // Pixel shader: sample the received texture. The sender already provides a
+    // proper alpha channel (transparent background), so we use it directly with
+    // alpha blending - no need to cut out black pixels.
     const char *g_psSource = R"(
 Texture2D tex : register(t0);
 SamplerState samp : register(s0);
@@ -72,6 +74,13 @@ bool DX12Renderer::init(HWND hwnd, int width, int height)
     }
 
     return true;
+}
+
+void DX12Renderer::setBackgroundColor(float r, float g, float b)
+{
+    m_bgR = r;
+    m_bgG = g;
+    m_bgB = b;
 }
 
 bool DX12Renderer::createDeviceAndSwapChain()
@@ -245,13 +254,15 @@ bool DX12Renderer::createPipeline()
     blend.IndependentBlendEnable = FALSE;
     for (UINT i = 0; i < 8; ++i)
     {
-        blend.RenderTarget[i].BlendEnable = FALSE;
+        // Enable alpha blending so transparent (black) pixels of the received
+        // texture let the background color show through.
+        blend.RenderTarget[i].BlendEnable = TRUE;
         blend.RenderTarget[i].LogicOpEnable = FALSE;
-        blend.RenderTarget[i].SrcBlend = D3D12_BLEND_ONE;
-        blend.RenderTarget[i].DestBlend = D3D12_BLEND_ZERO;
+        blend.RenderTarget[i].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+        blend.RenderTarget[i].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
         blend.RenderTarget[i].BlendOp = D3D12_BLEND_OP_ADD;
         blend.RenderTarget[i].SrcBlendAlpha = D3D12_BLEND_ONE;
-        blend.RenderTarget[i].DestBlendAlpha = D3D12_BLEND_ZERO;
+        blend.RenderTarget[i].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
         blend.RenderTarget[i].BlendOpAlpha = D3D12_BLEND_OP_ADD;
         blend.RenderTarget[i].LogicOp = D3D12_LOGIC_OP_NOOP;
         blend.RenderTarget[i].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
@@ -452,7 +463,7 @@ void DX12Renderer::recordCommandList(ID3D12Resource *texture)
     D3D12_CPU_DESCRIPTOR_HANDLE rtv(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
     rtv.ptr += m_frameIndex * m_rtvDescriptorSize;
     m_cmdList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
-    float clear[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    float clear[4] = {m_bgR, m_bgG, m_bgB, 1.0f};
     m_cmdList->ClearRenderTargetView(rtv, clear, 0, nullptr);
 
     if (texture)

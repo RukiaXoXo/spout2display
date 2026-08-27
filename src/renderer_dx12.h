@@ -33,6 +33,7 @@ public:
 
     bool init(HWND hwnd, int width, int height) override;
     void resize(int width, int height) override;
+    void setBackgroundColor(float r, float g, float b) override;
     void renderFrame() override;
     void present() override;
     void shutdown() override;
@@ -41,6 +42,9 @@ private:
     HWND m_hwnd = nullptr;
     int m_width = 0;
     int m_height = 0;
+    float m_bgR = 0.0f;
+    float m_bgG = 0.0f;
+    float m_bgB = 0.0f;
 
     ComPtr<ID3D12Device> m_device;
     ComPtr<ID3D12CommandQueue> m_queue;

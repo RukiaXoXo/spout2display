@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <windows.h>
+#include <windowsx.h>
 
 #include <string>
 #include <vector>
@@ -32,6 +33,22 @@
 // ---------------------------------------------------------------------------
 static std::unique_ptr<IRenderer> g_renderer;
 
+// Menu command IDs for the background color.
+enum
+{
+    ID_BG_BLACK = 1,
+    ID_BG_WHITE,
+    ID_BG_RED,
+    ID_BG_GREEN,
+    ID_BG_BLUE
+};
+
+static void applyBackground(float r, float g, float b)
+{
+    if (g_renderer)
+        g_renderer->setBackgroundColor(r, g, b);
+}
+
 // ---------------------------------------------------------------------------
 // Window procedure
 // ---------------------------------------------------------------------------
@@ -43,6 +60,44 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         if (g_renderer)
             g_renderer->resize(LOWORD(lParam), HIWORD(lParam));
         break;
+    case WM_CONTEXTMENU:
+    {
+        HMENU menu = CreatePopupMenu();
+        AppendMenu(menu, MF_STRING, ID_BG_BLACK, L"Black background");
+        AppendMenu(menu, MF_STRING, ID_BG_WHITE, L"White background");
+        AppendMenu(menu, MF_STRING, ID_BG_RED, L"Red background");
+        AppendMenu(menu, MF_STRING, ID_BG_GREEN, L"Green background");
+        AppendMenu(menu, MF_STRING, ID_BG_BLUE, L"Blue background");
+
+        POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        if (pt.x == -1 && pt.y == -1)
+            GetCursorPos(&pt);
+        int cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
+                                 pt.x, pt.y, 0, hwnd, nullptr);
+        DestroyMenu(menu);
+
+        switch (cmd)
+        {
+        case ID_BG_BLACK:
+            applyBackground(0.0f, 0.0f, 0.0f);
+            break;
+        case ID_BG_WHITE:
+            applyBackground(1.0f, 1.0f, 1.0f);
+            break;
+        case ID_BG_RED:
+            applyBackground(1.0f, 0.0f, 0.0f);
+            break;
+        case ID_BG_GREEN:
+            applyBackground(0.0f, 1.0f, 0.0f);
+            break;
+        case ID_BG_BLUE:
+            applyBackground(0.0f, 0.0f, 1.0f);
+            break;
+        default:
+            break;
+        }
+        return 0;
+    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

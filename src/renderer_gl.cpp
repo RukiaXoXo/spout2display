@@ -67,6 +67,13 @@ void OpenGLRenderer::resize(int width, int height)
     m_height = height;
 }
 
+void OpenGLRenderer::setBackgroundColor(float r, float g, float b)
+{
+    m_bgR = r;
+    m_bgG = g;
+    m_bgB = b;
+}
+
 void OpenGLRenderer::createTexture(unsigned int w, unsigned int h)
 {
     if (m_texID != 0)
@@ -114,7 +121,7 @@ void OpenGLRenderer::renderFrame()
     }
 
     glViewport(0, 0, m_width, m_height);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(m_bgR, m_bgG, m_bgB, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (m_connected)
@@ -137,6 +144,11 @@ void OpenGLRenderer::renderFrame()
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
 
+            // Enable alpha blending so the texture's alpha channel lets the
+            // background color show through transparent areas.
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, m_texID);
             glColor3f(1.0f, 1.0f, 1.0f);
@@ -153,6 +165,7 @@ void OpenGLRenderer::renderFrame()
             glEnd();
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
+            glDisable(GL_BLEND);
         }
         else
         {

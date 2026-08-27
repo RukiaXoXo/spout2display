@@ -35,6 +35,8 @@ public:
     virtual bool init(HWND hwnd, int width, int height) = 0;
     // Handle window resize.
     virtual void resize(int width, int height) = 0;
+    // Set the background (clear) color, RGB in 0..1 range.
+    virtual void setBackgroundColor(float r, float g, float b) = 0;
     // Receive the first available Spout sender and draw it.
     virtual void renderFrame() = 0;
     // Present the rendered frame to the window.
