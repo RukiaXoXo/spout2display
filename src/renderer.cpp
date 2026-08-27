@@ -16,13 +16,13 @@
 
 void Renderer::init(int width, int height)
 {
-    m_width  = width;
+    m_width = width;
     m_height = height;
 }
 
 void Renderer::resize(int width, int height)
 {
-    m_width  = width;
+    m_width = width;
     m_height = height;
 }
 
@@ -47,10 +47,14 @@ void Renderer::render(GLuint textureID, unsigned int texW, unsigned int texH)
     glColor3f(1.0f, 1.0f, 1.0f);
 
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 0.0f);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, 1.0f);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(1.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 1.0f);
     glEnd();
 
     glBindTexture(GL_TEXTURE_2D, 0);
