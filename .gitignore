@@ -1,5 +1,5 @@
-spout2libs
-
+/spout2libs/*
+!/spout2libs/PLACE_SPOUT2_FILES_HERE
 # Build output
 build/
 out/
