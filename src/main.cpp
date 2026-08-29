@@ -35,14 +35,16 @@ static std::unique_ptr<IRenderer> g_renderer;
 static bool g_showFps = false;
 static std::wstring g_baseTitle = L"Spout2 Display";
 
-// Menu command IDs for the background color.
+// Menu command IDs.
 enum
 {
     ID_BG_BLACK = 1,
     ID_BG_WHITE,
     ID_BG_RED,
     ID_BG_GREEN,
-    ID_BG_BLUE
+    ID_BG_BLUE,
+    ID_SOURCE_FIRST = 50, // first available source
+    ID_SOURCE_BASE = 100  // source list items: ID_SOURCE_BASE + index
 };
 
 static void applyBackground(float r, float g, float b)
@@ -72,12 +74,37 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         break;
     case WM_CONTEXTMENU:
     {
+        // Background color submenu.
+        HMENU bgMenu = CreatePopupMenu();
+        AppendMenu(bgMenu, MF_STRING, ID_BG_BLACK, L"Black");
+        AppendMenu(bgMenu, MF_STRING, ID_BG_WHITE, L"White");
+        AppendMenu(bgMenu, MF_STRING, ID_BG_RED, L"Red");
+        AppendMenu(bgMenu, MF_STRING, ID_BG_GREEN, L"Green");
+        AppendMenu(bgMenu, MF_STRING, ID_BG_BLUE, L"Blue");
+
+        // Source submenu.
+        HMENU srcMenu = CreatePopupMenu();
+        AppendMenu(srcMenu, MF_STRING, ID_SOURCE_FIRST, L"First available");
+        if (g_renderer)
+        {
+            auto senders = g_renderer->getSenderList();
+            if (senders.empty())
+                AppendMenu(srcMenu, MF_STRING | MF_GRAYED, 0, L"(no sources)");
+            else
+            {
+                for (size_t i = 0; i < senders.size(); ++i)
+                {
+                    std::wstring wname(senders[i].begin(), senders[i].end());
+                    AppendMenu(srcMenu, MF_STRING, ID_SOURCE_BASE + (UINT)i,
+                               wname.c_str());
+                }
+            }
+        }
+
+        // Top-level menu with Background and Source submenus.
         HMENU menu = CreatePopupMenu();
-        AppendMenu(menu, MF_STRING, ID_BG_BLACK, L"Black background");
-        AppendMenu(menu, MF_STRING, ID_BG_WHITE, L"White background");
-        AppendMenu(menu, MF_STRING, ID_BG_RED, L"Red background");
-        AppendMenu(menu, MF_STRING, ID_BG_GREEN, L"Green background");
-        AppendMenu(menu, MF_STRING, ID_BG_BLUE, L"Blue background");
+        AppendMenu(menu, MF_POPUP, (UINT_PTR)bgMenu, L"Background");
+        AppendMenu(menu, MF_POPUP, (UINT_PTR)srcMenu, L"Source");
 
         POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         if (pt.x == -1 && pt.y == -1)
@@ -85,6 +112,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         int cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
                                  pt.x, pt.y, 0, hwnd, nullptr);
         DestroyMenu(menu);
+        DestroyMenu(bgMenu);
+        DestroyMenu(srcMenu);
 
         switch (cmd)
         {
@@ -103,8 +132,21 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         case ID_BG_BLUE:
             applyBackground(0.0f, 0.0f, 1.0f);
             break;
+        case ID_SOURCE_FIRST:
+            if (g_renderer)
+                g_renderer->setSenderName("");
+            break;
         default:
             break;
+        }
+
+        // Source selection.
+        if (cmd >= ID_SOURCE_BASE && g_renderer)
+        {
+            auto senders = g_renderer->getSenderList();
+            UINT idx = (UINT)(cmd - ID_SOURCE_BASE);
+            if (idx < senders.size())
+                g_renderer->setSenderName(senders[idx]);
         }
         return 0;
     }

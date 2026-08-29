@@ -74,6 +74,21 @@ void OpenGLRenderer::setBackgroundColor(float r, float g, float b)
     m_bgB = b;
 }
 
+std::vector<std::string> OpenGLRenderer::getSenderList()
+{
+    if (!m_receiver)
+        return {};
+    return m_receiver->GetSenderList();
+}
+
+void OpenGLRenderer::setSenderName(const std::string &name)
+{
+    m_preferredSender = name;
+    // Force a reconnect to the new sender on the next frame.
+    m_connected = false;
+    m_receiver->ReleaseReceiver();
+}
+
 void OpenGLRenderer::createTexture(unsigned int w, unsigned int h)
 {
     if (m_texID != 0)
@@ -108,27 +123,41 @@ void OpenGLRenderer::renderFrame()
         m_lastFpsTime = now;
     }
 
-    // Look for the first available sender.
-    int count = m_receiver->GetSenderCount();
-    if (count > 0)
+    // Find the sender to connect to: preferred sender if set, else the first.
+    std::vector<std::string> senders = m_receiver->GetSenderList();
+    const std::string *target = nullptr;
+    if (!m_preferredSender.empty())
     {
-        char name[256] = "";
-        if (m_receiver->GetSender(0, name, 256))
+        for (const auto &s : senders)
         {
-            if (!m_connected || std::strcmp(m_senderName, name) != 0)
+            if (s == m_preferredSender)
             {
-                m_receiver->ReleaseReceiver();
-                m_texW = 0;
-                m_texH = 0;
-                m_connected = false;
+                target = &s;
+                break;
+            }
+        }
+    }
+    if (!target && !senders.empty())
+        target = &senders[0];
 
-                if (m_receiver->CreateReceiver(name, m_texW, m_texH))
-                {
-                    std::strncpy(m_senderName, name, sizeof(m_senderName) - 1);
-                    m_senderName[sizeof(m_senderName) - 1] = '\0';
-                    m_connected = true;
-                    createTexture(m_texW, m_texH);
-                }
+    if (target)
+    {
+        if (!m_connected || std::strcmp(m_senderName, target->c_str()) != 0)
+        {
+            m_receiver->ReleaseReceiver();
+            m_texW = 0;
+            m_texH = 0;
+            m_connected = false;
+
+            char nameBuf[256];
+            std::strncpy(nameBuf, target->c_str(), sizeof(nameBuf) - 1);
+            nameBuf[sizeof(nameBuf) - 1] = '\0';
+            if (m_receiver->CreateReceiver(nameBuf, m_texW, m_texH))
+            {
+                std::strncpy(m_senderName, target->c_str(), sizeof(m_senderName) - 1);
+                m_senderName[sizeof(m_senderName) - 1] = '\0';
+                m_connected = true;
+                createTexture(m_texW, m_texH);
             }
         }
     }

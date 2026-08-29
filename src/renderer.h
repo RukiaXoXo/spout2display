@@ -16,6 +16,8 @@
 
 #include <windows.h>
 #include <memory>
+#include <string>
+#include <vector>
 
 // Backend selection for rendering + Spout receiving.
 enum class RenderBackend
@@ -37,6 +39,10 @@ public:
     virtual void resize(int width, int height) = 0;
     // Set the background (clear) color, RGB in 0..1 range.
     virtual void setBackgroundColor(float r, float g, float b) = 0;
+    // List of currently available Spout2 senders.
+    virtual std::vector<std::string> getSenderList() = 0;
+    // Set the preferred sender to receive from (empty = first available).
+    virtual void setSenderName(const std::string &name) = 0;
     // Receive the first available Spout sender and draw it.
     virtual void renderFrame() = 0;
     // Present the rendered frame to the window.

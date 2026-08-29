@@ -83,6 +83,21 @@ void DX12Renderer::setBackgroundColor(float r, float g, float b)
     m_bgB = b;
 }
 
+std::vector<std::string> DX12Renderer::getSenderList()
+{
+    if (!m_receiver)
+        return {};
+    return m_receiver->GetSenderList();
+}
+
+void DX12Renderer::setSenderName(const std::string &name)
+{
+    m_preferredSender = name;
+    // Force a reconnect to the new sender on the next frame.
+    m_connected = false;
+    m_receiver->ReleaseReceiver();
+}
+
 bool DX12Renderer::createDeviceAndSwapChain()
 {
     ComPtr<IDXGIFactory4> factory;
@@ -393,17 +408,31 @@ void DX12Renderer::renderFrame()
         m_lastFpsTime = now;
     }
 
-    // Find the first available sender.
+    // Find the sender to connect to: preferred sender if set, else the first.
     std::vector<std::string> senders = m_receiver->GetSenderList();
-    if (!senders.empty())
+    const char *target = nullptr;
+    if (!m_preferredSender.empty())
     {
-        const char *name = senders[0].c_str();
-        if (!m_connected || std::strcmp(m_senderName, name) != 0)
+        for (const auto &s : senders)
+        {
+            if (s == m_preferredSender)
+            {
+                target = s.c_str();
+                break;
+            }
+        }
+    }
+    if (!target && !senders.empty())
+        target = senders[0].c_str();
+
+    if (target)
+    {
+        if (!m_connected || std::strcmp(m_senderName, target) != 0)
         {
             m_receiver->ReleaseReceiver();
             m_connected = false;
-            m_receiver->SetReceiverName(name);
-            std::strncpy(m_senderName, name, sizeof(m_senderName) - 1);
+            m_receiver->SetReceiverName(target);
+            std::strncpy(m_senderName, target, sizeof(m_senderName) - 1);
             m_senderName[sizeof(m_senderName) - 1] = '\0';
             m_connected = true;
         }
